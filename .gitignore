@@ -1,0 +1,9 @@
+# Compiled
+*.pyc
+
+# SetupTools
+/dist/
+/*.egg-info
+
+# PyCharm
+.idea/
