@@ -14,5 +14,6 @@ setup(name='mosaic_image',
             ]
       },
       install_requires = [
-            'pillow>=5.0.0'
+            'Pillow>=5.0.0',
+            'numpy>=1.14.0'
       ])
