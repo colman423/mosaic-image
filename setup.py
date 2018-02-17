@@ -12,5 +12,7 @@ setup(name='mosaic_image',
             'console_scripts': [
                 'create-mosaic-data=mosaic_image.create_mosaic_data:run'
             ]
-      }
-      )
+      },
+      install_requires = [
+            'pillow>=5.0.0'
+      ])
