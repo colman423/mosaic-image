@@ -3,9 +3,9 @@ import colorsys
 
 
 def doColorHistogram(pixel, width, height, xStart=0, yStart=0):
-    hArr = [0 for i in range(360)]
-    sArr = [0 for i in range(101)]
-    vArr = [0 for i in range(101)]
+    hArr = [0]*360
+    sArr = [0]*101
+    vArr = [0]*101
     # print "info:", width, height, xStart, yStart
     pixArr = [pixel[x+xStart, y+yStart] for x in range(width) for y in range(height)]
     hsvArr = [colorsys.rgb_to_hsv(item[0]/255., item[1]/255., item[2]/255.) for item in pixArr]
