@@ -2,6 +2,7 @@
 from .utility import *
 import numpy as np
 from .color_histogram import doColorHistogram
+from .color_layout import doColorLayout
 
 def run(image, result, grid, data_set, mode, **kwargs):
 
@@ -10,7 +11,7 @@ def run(image, result, grid, data_set, mode, **kwargs):
         img = Image.open(image)
         pixel = img.load()
         width, height = img.size
-        blockW, blockH = int(round(width / float(grid))), int((height / float(grid)))
+        blockW, blockH = width/float(grid), height/float(grid)
     except:
         raise Exception("invalid input image")
 
@@ -29,8 +30,8 @@ def run(image, result, grid, data_set, mode, **kwargs):
         tile = tiles[i]
         # print "tiles[{0}] = {1}".format(i, tile)
         block = Image.open(data_set + tile)
-        block = block.resize((blockW, blockH))
-        img.paste(block, (blockW * (i % grid), blockH * int(i / grid)))
+        block = block.resize((int(blockW), int(blockH)))
+        img.paste(block, (int(blockW*(i%grid)), int(blockH*int(i/grid))))
 
     img.save(result)
 
@@ -43,18 +44,17 @@ def histogram(img, pixel, width, height, blockW, blockH, grid, data_set, extensi
         w = (int)(i % grid)
         h = (int)(i / grid)
         # print w, h
-        data = doColorHistogram(pixel, blockW, blockH, width * w / grid, height * h / grid)
+        data = doColorHistogram(pixel, int(blockW), int(blockH), width*w/grid, height*h/grid)
         imgData[i] = np.array(data)
 
 
     # ===== finding tiles =====
-    colorDis = [-1]*pow(grid, 2)
+    distances = [-1]*pow(grid, 2)
     tiles = [None]*pow(grid, 2)
 
-    filedata = [f for f in os.listdir(data_set) if f.endswith(extension)]
-    datacount = len(filedata)
-    for i in range(datacount):
-        filename = filedata[i]
+    data_files = [f for f in os.listdir(data_set) if f.endswith(extension)]
+    for i in range(len(data_files)):
+        filename = data_files[i]
 
         with open(data_set + filename) as f:
             print("comparing file "+filename)
@@ -66,13 +66,14 @@ def histogram(img, pixel, width, height, blockW, blockH, grid, data_set, extensi
                 for y in range(360):
                     if combine[y] > 180:
                         combine[y] = (360 - combine[y])
-                    combine[y] =combine[y] * 2
-                for y in range(360, 461):
+                    # combine[y] = combine[y] * 2
+                for y in range(360, 562):
                     combine[y] = combine[y] / 2
+                    # pass
                 distance = np.linalg.norm(combine)
 
-                if distance < colorDis[j] or colorDis[j] == -1:
-                    colorDis[j] = distance
+                if distance < distances[j] or distances[j] == -1:
+                    distances[j] = distance
                     tiles[j] = filename.replace(extension, "")
 
     return tiles
@@ -80,45 +81,51 @@ def histogram(img, pixel, width, height, blockW, blockH, grid, data_set, extensi
 
 def layout(img, pixel, width, height, blockW, blockH, grid, data_set, extension):
 
-
     # ===== cutting image =====
     imgData = [None]*pow(grid, 2)
     for i in range(grid * grid):
         w = (int)(i % grid)
         h = (int)(i / grid)
         # print w, h
-        data = doColorHistogram(pixel, blockW, blockH, width * w / grid, height * h / grid)
+        data = doColorHistogram(pixel, int(blockW), int(blockH), width*w/grid, height*h/grid)
         imgData[i] = np.array(data)
 
+    dataY = [None]*pow(grid, 2)
+    dataCb = [None]*pow(grid, 2)
+    dataCr = [None]*pow(grid, 2)
+    for i in range(grid * grid):
+        w = (int)(i % grid)
+        h = (int)(i / grid)
+        # print w, h
+        dataY[i], dataCb[i], dataCr[i] = doColorLayout(pixel, int(blockW), int(blockH), width*w/grid, height*h/grid)
 
     # ===== finding tiles =====
-
-    colorDis = [-1]*pow(grid, 2)
+    distances = [-1]*pow(grid, 2)
     tiles = [None]*pow(grid, 2)
 
-    filedata = [f for f in os.listdir(data_set) if f.endswith(extension)]
-    datacount = len(filedata)
-    for i in range(datacount):
-        filename = filedata[i]
+    data_files = [f for f in os.listdir(data_set) if f.endswith(extension)]
+    for i in range(len(data_files)):
+        filename = data_files[i]
 
         with open(data_set + filename) as f:
             print("comparing file "+filename)
-            compareData = [int(item) for item in f.read().splitlines()]
+            compareData = [item.split(' ') for item in f.read().splitlines()]
             f.close()
+            compY = [float(j[0]) for j in compareData]
+            compCb = [float(j[1]) for j in compareData]
+            compCr = [float(j[2]) for j in compareData]
 
-            for j in range(pow(grid, 2)):
+            for j in range(grid * grid):
+                imgY, imgCb, imgCr = dataY[j], dataCb[j], dataCr[j]
 
-                combine = list(map(lambda x: abs(x[0] - x[1]), zip(np.array(compareData), imgData[j])))
-                for y in range(360):
-                    if combine[y] > 180:
-                        combine[y] = (360 - combine[y])
-                    combine[y] =combine[y] * 2
-                for y in range(360, 461):
-                    combine[y] = combine[y] / 2
-                distance = np.linalg.norm(combine)
+                disY = [pow(imgY[k] - compY[k], 2) for k in range(64)]
+                disCb = [pow(imgCb[k] - compCb[k], 2) for k in range(64)]
+                disCr = [pow(imgCr[k] - compCr[k], 2) for k in range(64)]
 
-                if distance < colorDis[j] or colorDis[j] == -1:
-                    colorDis[j] = distance
+                distance = pow(sum(disY), 0.5) + pow(sum(disCb), 0.5) + pow(sum(disCr), 0.5)
+
+                if distance < distances[j] or distances[j] == -1:
+                    distances[j] = distance
                     tiles[j] = filename.replace(extension, "")
 
     return tiles

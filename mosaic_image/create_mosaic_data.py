@@ -1,7 +1,7 @@
 # coding=utf-8
 from .utility import *
 from .color_histogram import doColorHistogram
-# from .color_layout import createData as createLayoutData
+from .color_layout import doColorLayout
 
 
 def createData(data_path, mode):
@@ -26,7 +26,11 @@ def createData(data_path, mode):
                 file.close()
 
             elif mode == COLOR_LAYOUT:
-                pass
+                dataY, dataCb, dataCr = doColorLayout(pixel, width, height)
+                file = open(data_path + image_name + extension, "w")
+                for i in range(64):
+                    print(str(dataY[i]) + ' ' + str(dataCb[i]) + ' ' + str(dataCr[i]), file=file)
+                file.close()
 
             else:
                 raise Exception("mode not found")
@@ -34,13 +38,15 @@ def createData(data_path, mode):
 
 def create(data_path, mode):
     print("start creating...")
+    flag = False
 
-    if mode==COLOR_HISTOGRAM or mode==COLOR_LAYOUT:
-        createData(data_path, mode)
-    elif mode==COLOR_HISTOGRAM+COLOR_LAYOUT or mode==COLOR_LAYOUT+COLOR_HISTOGRAM:
+    if mode.find(COLOR_HISTOGRAM)!=-1:
         createData(data_path, COLOR_HISTOGRAM)
+        flag = True
+    if mode.find(COLOR_LAYOUT) != -1:
         createData(data_path, COLOR_LAYOUT)
-    else:
+        flag = True
+    if not flag:
         raise Exception("mode not found")
 
     print("create data end")
