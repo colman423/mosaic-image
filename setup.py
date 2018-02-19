@@ -5,7 +5,7 @@ setup(name='mosaic_image',
       version='0.1',
       description='An API to process a mosaic image with serveral images',
       #url='',
-      author='Colman',
+      author='Colman423',
       author_email='colman0423@gmail.com',
       package=['mosaic_image'],
       entry_points={
@@ -15,5 +15,6 @@ setup(name='mosaic_image',
       },
       install_requires = [
             'Pillow>=5.0.0',
-            'numpy>=1.14.0'
+            'numpy>=1.14.0',
+            'scipy>=1.0.0'
       ])
